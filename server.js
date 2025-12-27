@@ -1,17 +1,30 @@
 // server.js
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const { Client } = require('ssh2');
 
 const app = express();
 const server = http.createServer(app);
 
-// 允许跨域，方便本地 React 开发调试
+const PORT = process.env.PORT || 4000;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// 生产模式下serve静态文件
+if (isProduction) {
+  app.use(express.static(path.join(__dirname, 'build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+}
+
+// Socket.IO配置
 const io = new Server(server, {
   cors: {
-    origin: "*", 
-    methods: ["GET", "POST"]
+    origin: isProduction ? false : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -68,6 +81,11 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(4000, () => {
-  console.log('Socket Server listening on port 4000');
+server.listen(PORT, () => {
+  if (isProduction) {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Open http://localhost:${PORT} in your browser`);
+  } else {
+    console.log(`Socket Server listening on port ${PORT}`);
+  }
 });

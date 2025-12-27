@@ -51,7 +51,11 @@ const WebTerminal = () => {
     setIsConnected(false);
 
     // 创建新的 socket 连接
-    const socket = io('http://111.230.110.186:4000');
+    // 开发模式下连接到localhost:4000，生产模式下使用当前域名
+    const socketUrl = process.env.NODE_ENV === 'production' 
+      ? window.location.origin 
+      : 'http://localhost:4000';
+    const socket = io(socketUrl);
     socketRef.current = socket;
 
     // 创建 xterm 实例
