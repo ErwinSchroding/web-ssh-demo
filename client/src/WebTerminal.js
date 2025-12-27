@@ -51,7 +51,7 @@ const WebTerminal = () => {
     setIsConnected(false);
 
     // 创建新的 socket 连接
-    const socket = io('http://localhost:4000');
+    const socket = io('http://111.230.110.186:4000');
     socketRef.current = socket;
 
     // 创建 xterm 实例
