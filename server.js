@@ -14,7 +14,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 // 生产模式下serve静态文件
 if (isProduction) {
   app.use(express.static(path.join(__dirname, 'build')));
-  app.get('*', (req, res) => {
+  app.use((req, res, next) => {
+    // 排除 Socket.IO 路径
+    if (req.path.startsWith('/socket.io')) {
+      return next();
+    }
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
   });
 }

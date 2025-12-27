@@ -23,25 +23,21 @@
 npm install
 ```
 
-### 2. 启动服务
+### 2. 构建并启动生产服务
 
-**开发模式**：
-```bash
-npm start
-```
-这将同时启动：
-- React 开发服务器（`http://localhost:3000`）
-- Socket.IO 服务器（`http://localhost:4000`）
-
-**生产模式**：
 ```bash
 npm run start:prod
 ```
-这将构建 React 应用并启动统一服务器（默认端口 4000）
+
+这将：
+1. 构建 React 应用（生成 `build` 目录）
+2. 启动统一服务器（默认端口 4000）
+   - 提供静态文件服务（前端页面）
+   - 提供 Socket.IO 服务（SSH 连接）
 
 ### 3. 使用说明
 
-1. 打开浏览器访问 `http://localhost:3000`（开发模式）或 `http://localhost:4000`（生产模式）
+1. 打开浏览器访问 `http://localhost:4000`（或您的服务器 IP:4000）
 2. 点击"⚙️ 设置魔术密码"按钮，设置一个通用密码（可选）
 3. 填写 SSH 连接信息：
    - 主机地址
@@ -77,9 +73,63 @@ web-ssh-demo/
 └── README.md
 ```
 
+## 生产环境部署
+
+### 使用 PM2 持久运行（推荐）
+
+```bash
+# 1. 安装 PM2
+npm install -g pm2
+
+# 2. 构建项目
+npm run build
+
+# 3. 启动服务
+NODE_ENV=production pm2 start server.js --name "web-ssh-demo"
+
+# 4. 设置开机自启
+pm2 startup
+pm2 save
+
+# 5. 查看状态和日志
+pm2 status
+pm2 logs web-ssh-demo
+```
+
+### 使用 systemd（可选）
+
+创建 `/etc/systemd/system/web-ssh-demo.service`：
+
+```ini
+[Unit]
+Description=Web SSH Demo Application
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/path/to/web-ssh-demo
+Environment=NODE_ENV=production
+Environment=PORT=4000
+ExecStart=/usr/bin/node /path/to/web-ssh-demo/server.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+然后启用并启动：
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable web-ssh-demo
+sudo systemctl start web-ssh-demo
+```
+
 ## 注意事项
 
-- 开发模式下，React 开发服务器和 Socket.IO 服务器会同时启动
-- 生产模式下，Express 服务器会同时提供静态文件服务和 Socket.IO 服务
+- 生产模式下，Express 服务器同时提供静态文件服务和 Socket.IO 服务
+- 默认端口为 4000，可通过环境变量 `PORT` 修改
 - 魔术密码保存在浏览器的 localStorage 中，仅本地有效
 - 请确保您有权限访问目标 SSH 服务器
+- 建议使用 Nginx 反向代理并配置 HTTPS
